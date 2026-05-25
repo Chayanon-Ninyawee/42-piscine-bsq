@@ -6,15 +6,18 @@
 /*   By: cninyawe <cninyawe@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/25 18:26:08 by cninyawe          #+#    #+#             */
-/*   Updated: 2026/05/25 19:51:21 by cninyawe         ###   ########.fr       */
+/*   Updated: 2026/05/25 20:20:52 by cninyawe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "bsq_solver.h"
+#include "file_reader.h"
 #include "types/bsq_map.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
-int	main(void)
+int	test_bsq_solver(void)
 {
 	t_bsq_map	map;
 	t_bsq_map	result;
@@ -50,5 +53,37 @@ int	main(void)
 	printf("\n====\n");
 	free_bsq_map(&map);
 	free_bsq_map(&result);
+	return (1);
+}
+
+int	main(int argc, char **argv)
+{
+	t_file_data	file_data;
+	int			i;
+
+	if (argc < 2)
+	{
+		printf("usage: ./program <file1> [file2 ...]\n");
+		return (1);
+	}
+	i = 1;
+	while (i < argc)
+	{
+		file_data = read_file_all(argv[i]);
+		if (!file_data.data)
+		{
+			printf("failed to read file: ");
+			printf("%s", argv[i]);
+			printf("\n");
+		}
+		else
+		{
+			printf("good\n");
+			// write(1, file_data.data, file_data.size);
+			// write(1, "\n", 1);
+			free(file_data.data);
+		}
+		i++;
+	}
 	return (0);
 }

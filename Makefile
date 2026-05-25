@@ -8,7 +8,9 @@ SRCS = \
 	$(SRCS_DIR)/types/bsq_map_core.c \
 	$(SRCS_DIR)/types/bsq_map_1.c \
 	$(SRCS_DIR)/types/bsq_map_print.c \
-	$(SRCS_DIR)/bsq_solver.c
+	$(SRCS_DIR)/types/linked_list.c \
+	$(SRCS_DIR)/bsq_solver.c \
+	$(SRCS_DIR)/file_reader.c
 
 
 OBJS = $(SRCS:.c=.o)
