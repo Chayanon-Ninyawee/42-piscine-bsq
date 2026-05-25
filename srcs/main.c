@@ -6,7 +6,7 @@
 /*   By: cninyawe <cninyawe@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/25 18:26:08 by cninyawe          #+#    #+#             */
-/*   Updated: 2026/05/25 19:23:11 by cninyawe         ###   ########.fr       */
+/*   Updated: 2026/05/25 19:42:49 by cninyawe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,32 +47,6 @@ void	mark_square(t_bsq_map map, int size, int sqr_col, int sqr_row)
 			bsq_map_write(map, 2, col + sqr_col, row + sqr_row);
 			col++;
 		}
-		row++;
-	}
-}
-
-void	print_bsq_map(t_bsq_map map)
-{
-	int	col;
-	int	row;
-	int	id;
-
-	row = 0;
-	while (row < map.y)
-	{
-		col = 0;
-		while (col < map.x)
-		{
-			id = bsq_map_lookup(map, col, row);
-			if (id == 0)
-				printf("0");
-			else if (id == 1)
-				printf("1");
-			else if (id == 2)
-				printf("2");
-			col++;
-		}
-		printf("\n");
 		row++;
 	}
 }
@@ -130,15 +104,16 @@ int	main(void)
 	bsq_map_write(map, 1, 2, 2);
 	if (!new_bsq_map(7, 5, &result))
 		return (0);
+	bsq_map_cpy(map, result);
 	if (!mark_largest_square(map, result))
 	{
 		printf("Error\n");
 		return (0);
 	}
 	printf("====\n\n");
-	print_bsq_map(map);
+	print_bsq_map(map, (t_bsq_charset){'-', '0', '#'});
 	printf("\n====\n\n");
-	print_bsq_map(result);
+	print_bsq_map(result, (t_bsq_charset){'-', '0', '#'});
 	printf("\n====\n");
 	free_bsq_map(&map);
 	free_bsq_map(&result);

@@ -5,7 +5,9 @@ INCLUDES_DIR = includes
 
 SRCS = \
 	$(SRCS_DIR)/main.c \
-	$(SRCS_DIR)/types/bsq_map.c
+	$(SRCS_DIR)/types/bsq_map_core.c \
+	$(SRCS_DIR)/types/bsq_map_1.c \
+	$(SRCS_DIR)/types/bsq_map_print.c \
 
 
 OBJS = $(SRCS:.c=.o)
