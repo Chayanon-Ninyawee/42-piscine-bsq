@@ -1,4 +1,4 @@
-NAME = rush-02
+NAME = bsq
 
 SRCS_DIR = srcs
 INCLUDES_DIR = includes
