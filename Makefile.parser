@@ -1,0 +1,63 @@
+NAME = test_parser
+CC = cc
+CFLAGS = -Wall -Wextra -Werror -g -MMD -MP -Iincludes
+
+SRCS = tests/run_tests.c \
+       srcs/parser_map.c \
+       srcs/types/bsq_map_core.c \
+       srcs/types/bsq_map_1.c \
+       srcs/types/bsq_map_print.c \
+       srcs/types/linked_list.c \
+       srcs/file_reader.c
+
+OBJS = $(SRCS:.c=.o)
+DEPS = $(SRCS:.c=.d)
+
+all: $(NAME)
+
+$(NAME): $(OBJS)
+	$(CC) $(OBJS) -o $(NAME)
+
+clean:
+	rm -f $(OBJS) $(DEPS)
+
+fclean: clean
+	rm -f $(NAME)
+	rm -rf test_maps
+
+# Internal helper target to spawn the entire test ecosystem cleanly and in numerical order
+maps_setup:
+	@mkdir -p test_maps
+#	--- 🟢 VALID MAPS (01 through 06) ---
+	@printf "3.ox\n...\n.o.\n...\n" > test_maps/01_valid_map.txt
+	@printf "379X\n777\n797\n777\n" > test_maps/02_custom_charset_map.txt
+	@printf "1.ox\n.\n" > test_maps/03_minimum_valid_map.txt
+	@printf "2.ox\n..........\n..........\n" > test_maps/04_wide_plain_map.txt
+	@printf "5.ox\n.\n.\no\n.\n.\n" > test_maps/05_tall_strip_map.txt
+	@printf "3 #$$\n   \n # \n   \n" > test_maps/06_symbol_charset_map.txt
+#	--- 🔴 DELIBERATE INVALID MAPS (07 through 18) ---
+	@printf "2147483648.ox\n...\n" > test_maps/07_overflow_map.txt
+	@printf "2.ox\n...\n...\nextra_garbage\n" > test_maps/08_trailing_data_map.txt
+	@printf "3.ox\n" > test_maps/09_null_body_map.txt
+	@printf "2.\x00ox\n..\n..\n" > test_maps/10_null_charset_map.txt
+	@printf "3a.ox\n...\n...\n...\n" > test_maps/11_null_digit_map.txt
+	@printf "2.ox\n...\n..\n" > test_maps/12_mismatched_row_map.txt
+	@printf "5.ox\n...\n...\n" > test_maps/13_missing_rows_map.txt
+	@printf "3.ox\n...\n\n...\n" > test_maps/14_empty_line_in_body.txt
+	@printf "" > test_maps/15_empty_file.txt
+	@printf "3.\x01ox\n...\n" > test_maps/16_non_printable_header.txt
+	@printf "3.oo\n...\n" > test_maps/17_duplicate_charset.txt
+	@printf "3 #$$\n   \n # \n   " > test_maps/18_space_charset_map.txt
+
+test: $(NAME) maps_setup
+	@echo "======================================================="
+	@echo "   STARTING INTEGRATED ALL-INCLUSIVE UNFILTERED TEST   "
+	@echo "======================================================="
+	@for map in $$(ls test_maps/*.txt | sort); do \
+		echo "-------------------------------------------------------"; \
+		valgrind --leak-check=full --show-leak-kinds=all ./$(NAME) $$map; \
+	done
+
+-include $(DEPS)
+
+.PHONY: all clean fclean test maps_setup
