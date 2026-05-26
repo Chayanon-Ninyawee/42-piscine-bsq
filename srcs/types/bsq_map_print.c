@@ -6,7 +6,7 @@
 /*   By: cninyawe <cninyawe@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/25 18:21:59 by cninyawe          #+#    #+#             */
-/*   Updated: 2026/05/26 14:28:38 by cninyawe         ###   ########.fr       */
+/*   Updated: 2026/05/26 17:30:02 by cninyawe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,29 +39,36 @@ void	print_bsq_map_raw(t_bsq_map bsq_map)
 		row++;
 	}
 }
-
-void	print_bsq_map(t_bsq_map bsq_map, t_bsq_charset charset)
+static char	get_map_char(int id, t_bsq_charset cs)
 {
-	int	col;
-	int	row;
-	int	id;
+	if (id == BSQ_MAP_EMPTY)
+		return (cs.empty);
+	if (id == BSQ_MAP_OBSTACLE)
+		return (cs.obstacle);
+	return (cs.full);
+}
 
-	row = 0;
-	while (row < bsq_map.y)
+void	print_bsq_map(t_bsq_map map, t_bsq_charset cs)
+{
+	char	*line;
+	int		x;
+	int		y;
+
+	line = malloc(map.x + 1);
+	if (!line)
+		return ;
+	y = 0;
+	while (y < map.y)
 	{
-		col = 0;
-		while (col < bsq_map.x)
+		x = 0;
+		while (x < map.x)
 		{
-			id = bsq_map_lookup(bsq_map, col, row);
-			if (id == BSQ_MAP_EMPTY)
-				write(1, &charset.empty, 1);
-			else if (id == BSQ_MAP_OBSTACLE)
-				write(1, &charset.obstacle, 1);
-			else if (id == BSQ_MAP_FULL)
-				write(1, &charset.full, 1);
-			col++;
+			line[x] = get_map_char(bsq_map_lookup(map, x, y), cs);
+			x++;
 		}
-		write(1, "\n", 1);
-		row++;
+		line[map.x] = '\n';
+		write(1, line, map.x + 1);
+		y++;
 	}
+	free(line);
 }

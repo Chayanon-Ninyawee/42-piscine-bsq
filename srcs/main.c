@@ -6,7 +6,7 @@
 /*   By: cninyawe <cninyawe@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/25 18:26:08 by cninyawe          #+#    #+#             */
-/*   Updated: 2026/05/26 16:39:45 by cninyawe         ###   ########.fr       */
+/*   Updated: 2026/05/26 17:40:08 by cninyawe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,14 +22,18 @@ static int	solve_and_print(t_file_data file_data)
 	t_bsq_charset	charset;
 	t_bsq_map		map;
 	t_bsq_map		result;
+	int				status;
 
 	if (!parser_map(file_data.data, file_data.size, &charset, &map))
 		return (print("map error\n"), 0);
 	if (!new_bsq_map(map.x, map.y, &result))
 		return (-1);
 	bsq_map_cpy(map, result);
-	if (!mark_largest_square(map, result))
+	status = mark_largest_square(map, result);
+	if (!status)
 		return (print("map error\n"), 0);
+	else if (status == -1)
+		return (0);
 	print_bsq_map(result, charset);
 	free_bsq_map(&map);
 	free_bsq_map(&result);
