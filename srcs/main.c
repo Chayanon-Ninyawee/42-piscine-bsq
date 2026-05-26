@@ -6,7 +6,7 @@
 /*   By: cninyawe <cninyawe@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/25 18:26:08 by cninyawe          #+#    #+#             */
-/*   Updated: 2026/05/26 16:26:27 by cninyawe         ###   ########.fr       */
+/*   Updated: 2026/05/26 16:39:45 by cninyawe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 #include "types/bsq_map.h"
 #include <stdlib.h>
 
-int	solve_and_print(t_file_data file_data)
+static int	solve_and_print(t_file_data file_data)
 {
 	t_bsq_charset	charset;
 	t_bsq_map		map;
@@ -36,15 +36,42 @@ int	solve_and_print(t_file_data file_data)
 	return (1);
 }
 
-int	main(int argc, char **argv)
+static int	solve_stdin(void)
 {
 	t_file_data	file_data;
 
-	if (argc != 2)
-		return (0);
-	if (!read_file_all(argv[1], &file_data))
+	if (!read_fd_all(0, &file_data))
 		return (print("map error\n"), 0);
 	solve_and_print(file_data);
 	free(file_data.data);
+	return (1);
+}
+static int	solve_files(int argc, char **argv)
+{
+	t_file_data	file_data;
+	int			i;
+
+	i = 1;
+	while (i < argc)
+	{
+		if (!read_file_all(argv[i], &file_data))
+			return (print("map error\n"), 0);
+		solve_and_print(file_data);
+		if (i < argc - 1)
+			print("\n");
+		free(file_data.data);
+		i++;
+	}
+	return (1);
+}
+
+int	main(int argc, char **argv)
+{
+	if (argc < 1)
+		return (0);
+	else if (argc == 1)
+		solve_stdin();
+	else
+		solve_files(argc, argv);
 	return (0);
 }
