@@ -6,7 +6,7 @@
 /*   By: cninyawe <cninyawe@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/25 19:47:23 by cninyawe          #+#    #+#             */
-/*   Updated: 2026/05/25 19:50:46 by cninyawe         ###   ########.fr       */
+/*   Updated: 2026/05/26 15:14:01 by cninyawe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -87,5 +87,5 @@ int	mark_largest_square(t_bsq_map map, t_bsq_map result)
 			return (1);
 		size--;
 	}
-	return (0);
+	return (2);
 }

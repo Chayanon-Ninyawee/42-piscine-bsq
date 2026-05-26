@@ -6,12 +6,15 @@
 /*   By: cninyawe <cninyawe@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/25 18:21:35 by cninyawe          #+#    #+#             */
-/*   Updated: 2026/05/25 19:40:53 by cninyawe         ###   ########.fr       */
+/*   Updated: 2026/05/26 14:28:31 by cninyawe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef BSQ_MAP_H
 # define BSQ_MAP_H
+# define BSQ_MAP_EMPTY 0
+# define BSQ_MAP_OBSTACLE 1
+# define BSQ_MAP_FULL 2
 
 typedef struct s_bsq_charset
 {

@@ -6,7 +6,7 @@
 /*   By: srungrit <srungrit@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 03:41:53 by srungrit          #+#    #+#             */
-/*   Updated: 2026/05/26 03:41:56 by srungrit         ###   ########.fr       */
+/*   Updated: 2026/05/26 14:39:07 by cninyawe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,29 +32,29 @@ static int	validate_charset(t_bsq_charset *charset)
 		&& charset->full >= 32 && charset->full <= 126);
 }
 
-static int	parser_header(char *content, int size, int *height,
+static int	parser_header(char *ct, int size, int *height,
 		t_bsq_charset *charset)
 {
 	int	len;
 	int	i;
 
-	len = get_line_len(content, size, 0);
+	len = get_line_len(ct, size, 0);
 	if (len < 4)
 		return (0);
-	charset->empty = content[len - 3];
-	charset->obstacle = content[len - 2];
-	charset->full = content[len - 1];
+	charset->empty = ct[len - 3];
+	charset->obstacle = ct[len - 2];
+	charset->full = ct[len - 1];
 	if (!validate_charset(charset))
 		return (0);
 	*height = 0;
 	i = -1;
 	while (++i < len - 3)
 	{
-		if (content[i] < '0' || content[i] > '9')
+		if (ct[i] < '0' || ct[i] > '9')
 			return (0);
-		if (*height > (2147483647 - (content[i] - '0')) / 10)
+		if (*height > (2147483647 - (ct[i] - '0')) / 10)
 			return (0);
-		*height = (*height * 10) + (content[i] - '0');
+		*height = (*height * 10) + (ct[i] - '0');
 	}
 	return (*height > 0);
 }
@@ -73,9 +73,9 @@ static int	parse_body_loop(t_bsq_map *m, char *ct, int size, int *i)
 		while (col < m->x)
 		{
 			if (ct[*i + col] == ct[get_line_len(ct, size, 0) - 3])
-				bsq_map_write(*m, BSQ_EMPTY, col, row);
+				bsq_map_write(*m, BSQ_MAP_EMPTY, col, row);
 			else if (ct[*i + col] == ct[get_line_len(ct, size, 0) - 2])
-				bsq_map_write(*m, BSQ_OBSTACLE, col, row);
+				bsq_map_write(*m, BSQ_MAP_OBSTACLE, col, row);
 			else
 				return (0);
 			col++;

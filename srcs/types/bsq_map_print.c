@@ -6,7 +6,7 @@
 /*   By: cninyawe <cninyawe@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/25 18:21:59 by cninyawe          #+#    #+#             */
-/*   Updated: 2026/05/25 19:37:53 by cninyawe         ###   ########.fr       */
+/*   Updated: 2026/05/26 14:28:38 by cninyawe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,11 +27,11 @@ void	print_bsq_map_raw(t_bsq_map bsq_map)
 		while (col < bsq_map.x)
 		{
 			id = bsq_map_lookup(bsq_map, col, row);
-			if (id == 0)
+			if (id == BSQ_MAP_EMPTY)
 				write(1, "0", 1);
-			else if (id == 1)
+			else if (id == BSQ_MAP_OBSTACLE)
 				write(1, "1", 1);
-			else if (id == 2)
+			else if (id == BSQ_MAP_FULL)
 				write(1, "2", 1);
 			col++;
 		}
@@ -53,11 +53,11 @@ void	print_bsq_map(t_bsq_map bsq_map, t_bsq_charset charset)
 		while (col < bsq_map.x)
 		{
 			id = bsq_map_lookup(bsq_map, col, row);
-			if (id == 0)
+			if (id == BSQ_MAP_EMPTY)
 				write(1, &charset.empty, 1);
-			else if (id == 1)
+			else if (id == BSQ_MAP_OBSTACLE)
 				write(1, &charset.obstacle, 1);
-			else if (id == 2)
+			else if (id == BSQ_MAP_FULL)
 				write(1, &charset.full, 1);
 			col++;
 		}
