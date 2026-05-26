@@ -1,27 +1,19 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   file_reader.h                                      :+:      :+:    :+:   */
+/*   file_reader_1.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: cninyawe <cninyawe@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/05/25 20:02:15 by cninyawe          #+#    #+#             */
-/*   Updated: 2026/05/26 15:34:53 by cninyawe         ###   ########.fr       */
+/*   Created: 2026/05/25 20:02:41 by cninyawe          #+#    #+#             */
+/*   Updated: 2026/05/26 15:39:28 by cninyawe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef FILE_READER_H
-# define FILE_READER_H
-# define BUFFER_SIZE 1024
+#include "file_reader.h"
+#include <stdlib.h>
 
-typedef struct s_file_data
+t_file_data	invalid_file_data(void)
 {
-	char	*data;
-	int		size;
-}			t_file_data;
-
-t_file_data	invalid_file_data(void);
-int			read_fd_all(int fd, t_file_data *file_data);
-int			read_file_all(char *path, t_file_data *file_data);
-
-#endif
+	return ((t_file_data){.data = NULL, .size = 0});
+}

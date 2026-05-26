@@ -6,7 +6,7 @@
 /*   By: cninyawe <cninyawe@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/25 19:47:23 by cninyawe          #+#    #+#             */
-/*   Updated: 2026/05/26 15:14:01 by cninyawe         ###   ########.fr       */
+/*   Updated: 2026/05/26 16:06:48 by cninyawe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,7 +76,7 @@ int	mark_largest_square(t_bsq_map map, t_bsq_map result)
 
 	if (!map.id_arr || !result.id_arr)
 		return (0);
-	if (map.x != result.x || map.y != result.y)
+	if (map.x != result.x || map.y != result.y || map.x < 1 || map.y < 1)
 		return (0);
 	size = map.x;
 	if (map.y < map.x)

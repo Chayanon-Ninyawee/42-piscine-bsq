@@ -6,7 +6,7 @@
 /*   By: srungrit <srungrit@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 03:41:53 by srungrit          #+#    #+#             */
-/*   Updated: 2026/05/26 14:39:07 by cninyawe         ###   ########.fr       */
+/*   Updated: 2026/05/26 15:56:59 by cninyawe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,21 +86,23 @@ static int	parse_body_loop(t_bsq_map *m, char *ct, int size, int *i)
 	return (row == m->y);
 }
 
-t_bsq_map	parser_map(char *content, int size, t_bsq_charset *charset)
+int	parser_map(char *content, int size, t_bsq_charset *charset, t_bsq_map *map)
 {
-	t_bsq_map	map;
-	int			i;
+	int	i;
 
-	map = invalid_bsq_map();
-	if (!content || size <= 0 || !parser_header(content, size, &map.y, charset))
-		return (map);
+	if (!map)
+		return (0);
+	*map = invalid_bsq_map();
+	if (!content || size <= 0 || !parser_header(content, size, &map->y,
+			charset))
+		return (0);
 	i = get_line_len(content, size, 0);
 	if (i >= size || content[i++] != '\n')
-		return (map);
-	map.x = get_line_len(content, size, i);
-	if (map.x <= 0 || !new_bsq_map(map.x, map.y, &map))
-		return (invalid_bsq_map());
-	if (!parse_body_loop(&map, content, size, &i) || i != size)
-		return (free_bsq_map(&map), invalid_bsq_map());
-	return (map);
+		return (0);
+	map->x = get_line_len(content, size, i);
+	if (map->x <= 0 || !new_bsq_map(map->x, map->y, map))
+		return (0);
+	if (!parse_body_loop(map, content, size, &i) || i != size)
+		return (free_bsq_map(map), 0);
+	return (1);
 }

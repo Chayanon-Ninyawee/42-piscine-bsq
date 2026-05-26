@@ -6,7 +6,7 @@
 /*   By: cninyawe <cninyawe@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/25 19:53:49 by cninyawe          #+#    #+#             */
-/*   Updated: 2026/05/25 20:05:49 by cninyawe         ###   ########.fr       */
+/*   Updated: 2026/05/26 16:25:24 by cninyawe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,4 +33,5 @@ void					free_linked_list(t_linked_list *list,
 int						append_linked_list(t_linked_list *list, void *data);
 
 void					**linked_list_to_array(t_linked_list list);
+
 #endif

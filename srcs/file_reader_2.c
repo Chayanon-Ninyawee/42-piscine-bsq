@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   file_reader.c                                      :+:      :+:    :+:   */
+/*   file_reader_2.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: cninyawe <cninyawe@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/25 20:02:41 by cninyawe          #+#    #+#             */
-/*   Updated: 2026/05/25 20:30:28 by cninyawe         ###   ########.fr       */
+/*   Updated: 2026/05/26 15:41:51 by cninyawe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,11 +15,6 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-static t_file_data	invalid_file_data(void)
-{
-	return ((t_file_data){.data = NULL, .size = 0});
-}
 
 static int	append_buffer(t_linked_list *list, char *buf, int size)
 {
@@ -80,25 +75,38 @@ static int	read_to_list(int fd, t_linked_list *list, int *total_size)
 	return (1);
 }
 
-t_file_data	read_file_all(char *path)
+int	read_fd_all(int fd, t_file_data *file_data)
 {
 	t_linked_list	list;
-	t_file_data		file_data;
-	int				fd;
 	int				total_size;
 
-	fd = open(path, O_RDONLY);
+	if (!file_data)
+		return (0);
+	*file_data = invalid_file_data();
 	if (fd < 0)
-		return (invalid_file_data());
+		return (0);
 	list = new_linked_list();
 	total_size = 0;
 	if (!read_to_list(fd, &list, &total_size))
-		return (close(fd), free_linked_list(&list, free), invalid_file_data());
-	close(fd);
-	file_data.data = list_to_char_array(list, total_size);
-	file_data.size = total_size;
+		return (free_linked_list(&list, free), 0);
+	file_data->data = list_to_char_array(list, total_size);
+	file_data->size = total_size;
 	free_linked_list(&list, free);
-	if (!file_data.data)
-		return (invalid_file_data());
-	return (file_data);
+	return (file_data->data != NULL);
+}
+
+int	read_file_all(char *path, t_file_data *file_data)
+{
+	int	fd;
+	int	success;
+
+	if (!file_data)
+		return (0);
+	*file_data = invalid_file_data();
+	fd = open(path, O_RDONLY);
+	if (fd < 0)
+		return (0);
+	success = read_fd_all(fd, file_data);
+	close(fd);
+	return (success);
 }
