@@ -6,7 +6,7 @@
 /*   By: cninyawe <cninyawe@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/25 19:47:23 by cninyawe          #+#    #+#             */
-/*   Updated: 2026/05/26 18:02:05 by cninyawe         ###   ########.fr       */
+/*   Updated: 2026/05/26 18:05:10 by cninyawe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,7 +53,7 @@ static int	get_square_size(t_bsq_map map, int *dp, int x, int y)
 	return (min + 1);
 }
 
-static void	fill_temp_map(t_bsq_map map, int *temp_map, t_bsq_solver_sqr *best)
+static void	find_best_sqr(t_bsq_map map, int *temp_map, t_bsq_solver_sqr *best)
 {
 	int	x;
 	int	y;
@@ -86,7 +86,7 @@ int	mark_largest_square(t_bsq_map map, t_bsq_map result)
 	if (!temp_map)
 		return (-1);
 	best = (t_bsq_solver_sqr){0, 0, 0};
-	fill_temp_map(map, temp_map, &best);
+	find_best_sqr(map, temp_map, &best);
 	free(temp_map);
 	if (best.size == 0)
 		return (2);
