@@ -6,7 +6,7 @@
 /*   By: cninyawe <cninyawe@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/25 18:26:08 by cninyawe          #+#    #+#             */
-/*   Updated: 2026/05/26 17:40:08 by cninyawe         ###   ########.fr       */
+/*   Updated: 2026/05/26 19:50:44 by cninyawe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,6 +50,7 @@ static int	solve_stdin(void)
 	free(file_data.data);
 	return (1);
 }
+
 static int	solve_files(int argc, char **argv)
 {
 	t_file_data	file_data;
