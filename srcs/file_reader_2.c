@@ -6,7 +6,7 @@
 /*   By: cninyawe <cninyawe@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/25 20:02:41 by cninyawe          #+#    #+#             */
-/*   Updated: 2026/05/26 15:41:51 by cninyawe         ###   ########.fr       */
+/*   Updated: 2026/05/27 13:21:55 by cninyawe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,20 +18,24 @@
 
 static int	append_buffer(t_linked_list *list, char *buf, int size)
 {
-	char	*chunk;
+	t_chunk	*chunk;
 	int		i;
 
-	chunk = malloc(sizeof(char) * size);
+	chunk = malloc(sizeof(t_chunk));
 	if (!chunk)
 		return (0);
+	chunk->data = malloc(size);
+	if (!chunk->data)
+		return (free(chunk), 0);
+	chunk->size = size;
 	i = 0;
 	while (i < size)
 	{
-		chunk[i] = buf[i];
+		chunk->data[i] = buf[i];
 		i++;
 	}
 	if (!append_linked_list(list, chunk))
-		return (free(chunk), 0);
+		return (free(chunk->data), free(chunk), 0);
 	return (1);
 }
 
@@ -39,7 +43,7 @@ static char	*list_to_char_array(t_linked_list list, int total_size)
 {
 	char		*arr;
 	t_list_node	*node;
-	char		*chunk;
+	t_chunk		*chunk;
 	int			i;
 	int			j;
 
@@ -52,8 +56,8 @@ static char	*list_to_char_array(t_linked_list list, int total_size)
 	{
 		chunk = node->data;
 		j = 0;
-		while (j < BUFFER_SIZE && i < total_size)
-			arr[i++] = chunk[j++];
+		while (j < chunk->size && i < total_size)
+			arr[i++] = chunk->data[j++];
 		node = node->next;
 	}
 	return (arr);
@@ -88,10 +92,10 @@ int	read_fd_all(int fd, t_file_data *file_data)
 	list = new_linked_list();
 	total_size = 0;
 	if (!read_to_list(fd, &list, &total_size))
-		return (free_linked_list(&list, free), 0);
+		return (free_linked_list(&list, free_chunk), 0);
 	file_data->data = list_to_char_array(list, total_size);
 	file_data->size = total_size;
-	free_linked_list(&list, free);
+	free_linked_list(&list, free_chunk);
 	return (file_data->data != NULL);
 }
 
