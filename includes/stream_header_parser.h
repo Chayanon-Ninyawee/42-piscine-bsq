@@ -1,30 +1,33 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   file_reader_1.c                                    :+:      :+:    :+:   */
+/*   stream_header_parser.h                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: cninyawe <cninyawe@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/05/25 20:02:41 by cninyawe          #+#    #+#             */
-/*   Updated: 2026/05/27 13:19:18 by cninyawe         ###   ########.fr       */
+/*   Created: 2026/05/27 17:18:57 by cninyawe          #+#    #+#             */
+/*   Updated: 2026/05/27 17:47:41 by cninyawe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "file_reader.h"
-#include <stdlib.h>
+#ifndef STREAM_HEADER_PARSER_H
+# define STREAM_HEADER_PARSER_H
+# include "file_stream.h"
 
-t_file_data	invalid_file_data(void)
+typedef struct s_bsq_charset
 {
-	return ((t_file_data){.data = NULL, .size = 0});
-}
+	char			empty;
+	char			obstacle;
+	char			full;
+}					t_bsq_charset;
 
-void	free_chunk(void *ptr)
+typedef struct s_stream_map_header
 {
-	t_chunk	*chunk;
+	int				height;
+	t_bsq_charset	charset;
+}					t_stream_map_header;
 
-	chunk = ptr;
-	if (!chunk)
-		return ;
-	free(chunk->data);
-	free(chunk);
-}
+int					parse_stream_header(t_file_stream *stream,
+						t_stream_map_header *header);
+
+#endif

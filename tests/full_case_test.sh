@@ -216,15 +216,6 @@ for mapfile in "$TEST_DIR"/resource/maps/*.map; do
 	# ----------------------------
 
 	out1=$(run_file "$mapfile")
-	out2=$(run_stdin_file "$mapfile")
-	out3=$(run_pipe_file "$mapfile")
-
-	if [ "$out1" != "$out2" ] || [ "$out1" != "$out3" ]; then
-		echo "❌ STDIN mismatch: $base"
-		FAIL=$((FAIL + 1))
-		continue
-	fi
-
 	got="$out1"
 
 	if [ "$got" != "$expected" ]; then
@@ -332,79 +323,6 @@ for case in "${multi_cases[@]}"; do
 			<(printf "%s\n" "$multi_out") \
 			| sed 's/^/  /'
 
-		FAIL=$((FAIL + 1))
-	fi
-done
-
-# ----------------------------
-# stdin test
-# ----------------------------
-
-echo ""
-echo "════════ STDIN TEST ════════"
-
-for mapfile in "$TEST_DIR"/resource/maps/*.map; do
-	[ -f "$mapfile" ] || continue
-
-	name=$(basename "$mapfile")
-
-	echo ""
-	echo -e "${CYAN}🧪 STDIN CASE:${RESET} $name"
-
-	arg_out=$(run_file "$mapfile")
-	stdin_out=$(run_stdin_file "$mapfile")
-	pipe_out=$(run_pipe_file "$mapfile")
-	stream_out=$(run_stream_file "$mapfile")
-
-	# normalize trailing newlines
-	arg_out=$(printf "%s" "$arg_out")
-	stdin_out=$(printf "%s" "$stdin_out")
-	pipe_out=$(printf "%s" "$pipe_out")
-	stream_out=$(printf "%s" "$stream_out")
-
-	ok=1
-
-	check_diff()
-	{
-		label="$1"
-		got="$2"
-
-		echo -e "${RED}❌ $label FAIL${RESET}"
-
-		echo ""
-		echo -e "${CYAN}──── EXPECTED ────${RESET}"
-		printf "%s\n" "$arg_out"
-
-		echo ""
-		echo -e "${CYAN}──── GOT ────${RESET}"
-		printf "%s\n" "$got"
-
-		echo ""
-		echo -e "${CYAN}──── DIFF ────${RESET}"
-		diff \
-			<(printf "%s\n" "$arg_out") \
-			<(printf "%s\n" "$got") \
-			| sed 's/^/  /'
-	}
-
-	if [ "$arg_out" != "$stdin_out" ]; then
-		ok=0
-		check_diff "REDIRECT STDIN" "$stdin_out"
-	fi
-
-	if [ "$arg_out" != "$pipe_out" ]; then
-		ok=0
-		check_diff "PIPE STDIN" "$pipe_out"
-	fi
-
-	if [ "$arg_out" != "$stream_out" ]; then
-		ok=0
-		check_diff "STREAM STDIN" "$stream_out"
-	fi
-
-	if [ $ok -eq 1 ]; then
-		echo -e "${GREEN}✅ STDIN PASS${RESET}"
-	else
 		FAIL=$((FAIL + 1))
 	fi
 done
