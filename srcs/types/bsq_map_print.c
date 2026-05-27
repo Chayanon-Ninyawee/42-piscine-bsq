@@ -6,7 +6,7 @@
 /*   By: cninyawe <cninyawe@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/25 18:21:59 by cninyawe          #+#    #+#             */
-/*   Updated: 2026/05/26 17:30:02 by cninyawe         ###   ########.fr       */
+/*   Updated: 2026/05/27 19:53:29 by srungrit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,7 @@ void	print_bsq_map_raw(t_bsq_map bsq_map)
 		row++;
 	}
 }
+
 static char	get_map_char(int id, t_bsq_charset cs)
 {
 	if (id == BSQ_MAP_EMPTY)
