@@ -6,7 +6,7 @@
 /*   By: cninyawe <cninyawe@student.42bangkok.com>  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/25 18:26:08 by cninyawe          #+#    #+#             */
-/*   Updated: 2026/05/26 19:50:44 by cninyawe         ###   ########.fr       */
+/*   Updated: 2026/05/27 15:36:07 by cninyawe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,8 +60,9 @@ static int	solve_files(int argc, char **argv)
 	while (i < argc)
 	{
 		if (!read_file_all(argv[i], &file_data))
-			return (print("map error\n"), 0);
-		solve_and_print(file_data);
+			print("map error\n");
+		else
+			solve_and_print(file_data);
 		if (i < argc - 1)
 			print("\n");
 		free(file_data.data);
