@@ -20,234 +20,139 @@ USE_MALLOC_STRIKE=0
 USE_BIG_MAP=0
 VERBOSE=0
 
-for arg in "$@"
-do
+for arg in "$@"; do
 	case "$arg" in
-		-v)
-			VERBOSE=1
-			;;
-		--valgrind)
-			USE_VALGRIND=1
-			;;
+		-v) VERBOSE=1 ;;
+		--valgrind) USE_VALGRIND=1 ;;
 		--malloc-strike)
 			USE_MALLOC_STRIKE=1
+			make -C "$STRIKE_DIR"
 			;;
-		--big-map)
-			USE_BIG_MAP=1
-			;;
+		--big-map) USE_BIG_MAP=1 ;;
 	esac
 done
 
-# 🚀 SOLO MODE CHECK: If --big-map is set, jump straight to the stress tests
-if [ $USE_BIG_MAP -eq 1 ]; then
-	echo -e "${YELLOW}${BOLD}🏃 Solo Mode Active: Running Big Map Stress Tests Only...${RESET}"
-else
-	# Only compile malloc strike if we are actually using it
-	if [ $USE_MALLOC_STRIKE -eq 1 ]; then
-		make -C "$STRIKE_DIR"
-	fi
+PASS=0
+FAIL=0
+MISSING=0
+FAILED_TESTS=()
 
-	PASS=0
-	FAIL=0
-	MISSING=0
-	FAILED_TESTS=()
+# ----------------------------
+# helpers
+# ----------------------------
 
-	run_command()
-	{
-		tmpfile=$(mktemp)
+run_cmd()
+{
+	tmp=$(mktemp)
+	set +e
+	"$@" > "$tmp" 2>&1
+	status=$?
+	set -e
+	out=$(cat "$tmp")
+	rm -f "$tmp"
+	echo "$out"
+	return $status
+}
 
-		set +e
-		"$@" > "$tmpfile" 2>&1
-		status=$?
-		set -e
+run_file()
+{
+	"$ROOT_DIR/bsq" "$1"
+}
 
-		output=$(cat "$tmpfile")
-		rm -f "$tmpfile"
+run_stdin_file()
+{
+	"$ROOT_DIR/bsq" < "$1"
+}
 
-		echo "$output"
+run_pipe_file()
+{
+	cat "$1" | "$ROOT_DIR/bsq"
+}
 
-		return $status
-	}
+run_multi_file()
+{
+	"$ROOT_DIR/bsq" "$@"
+}
 
-	run_valgrind_test()
-	{
-		mapfile="$1"
+run_stream_file()
+{
+	python3 -c '
+import random
+import sys
+import time
 
-		output=$(
-			run_command \
-				valgrind \
-					--leak-check=full \
-					--show-leak-kinds=all \
-					--errors-for-leak-kinds=definite,possible \
-					--error-exitcode=2 \
-					"$ROOT_DIR/bsq" "$mapfile"
-		)
+data = open(sys.argv[1], "rb").read()
+i = 0
+
+while i < len(data):
+	n = random.randint(1, 13)
+
+	sys.stdout.buffer.write(data[i:i+n])
+	sys.stdout.flush()
+
+	i += n
+	time.sleep(0.0001)
+' "$1" | "$ROOT_DIR/bsq"
+}
+
+run_valgrind()
+{
+	mapfile="$1"
+
+	run_cmd valgrind \
+		--leak-check=full \
+		--show-leak-kinds=all \
+		--errors-for-leak-kinds=definite,possible \
+		--error-exitcode=2 \
+		"$ROOT_DIR/bsq" "$mapfile"
+}
+
+run_malloc_strike()
+{
+	mapfile="$1"
+	i=1
+
+	while true; do
+		out=$(run_cmd env \
+			MALLOC_STRIKE=$i \
+			LD_PRELOAD="$STRIKE_DIR/malloc_strike.so" \
+			"$ROOT_DIR/bsq" "$mapfile")
 
 		status=$?
 
 		if [ $status -ne 0 ]; then
-			echo ""
-			echo -e "${RED}Valgrind failed${RESET}"
-			echo "$output"
+			echo "Malloc strike failed at #$i"
+			echo "$out"
 			return 1
 		fi
 
-		return 0
-	}
-
-	run_malloc_strike_test()
-	{
-		mapfile="$1"
-		i=1
-
-		while true
-		do
-			output=$(
-				run_command \
-					env \
-						MALLOC_STRIKE=$i \
-						LD_PRELOAD="$STRIKE_DIR/malloc_strike.so" \
-						"$ROOT_DIR/bsq" "$mapfile"
-			)
-
-			status=$?
-
-			if [ $status -ne 0 ]; then
-				echo ""
-				echo -e "${RED}Malloc strike failed at allocation #$i${RESET}"
-				echo "$output"
-				return 1
-			fi
-
-			echo "$output" | grep -q "NO_FAIL" && break
-
-			i=$((i + 1))
-		done
-
-		return 0
-	}
-
-	print_verbose()
-	{
-		mapfile="$1"
-		expected="$2"
-		got="$3"
-
-		echo ""
-		echo -e "${CYAN}  ── INPUT MAP ──────────────────────${RESET}"
-		cat "$mapfile" | sed 's/^/  /'
-
-		echo -e "${CYAN}  ── EXPECTED ───────────────────────${RESET}"
-		echo "$expected" | sed 's/^/  /'
-
-		echo -e "${CYAN}  ── GOT ────────────────────────────${RESET}"
-		echo "$got" | sed 's/^/  /'
-
-		echo -e "${CYAN}  ── ─────────────────────────────────${RESET}"
-		echo ""
-	}
-
-	for mapfile in "$TEST_DIR"/resource/maps/*.map; do
-		base=$(basename "$mapfile")
-		answerfile="$TEST_DIR/resource/solution/$base"
-
-		[ -e "$mapfile" ] || continue
-
-		if [ ! -f "$answerfile" ]; then
-			MISSING=$((MISSING + 1))
-			echo -e "${YELLOW}⚠️  NO SOLUTION: $base${RESET}"
-			continue
-		fi
-
-		got=$("$ROOT_DIR/bsq" "$mapfile")
-		expected=$(cat "$answerfile")
-
-		if [ "$got" != "$expected" ]; then
-			FAIL=$((FAIL + 1))
-			FAILED_TESTS+=("$base")
-
-			echo -e "${RED}❌ FAIL: $base${RESET}"
-
-			if [ $VERBOSE -eq 1 ]; then
-				print_verbose "$mapfile" "$expected" "$got"
-			fi
-
-			continue
-		fi
-
-		if [ $USE_VALGRIND -eq 1 ]; then
-			echo -e "${CYAN}🔍 VALGRIND: $base${RESET}"
-
-			if ! run_valgrind_test "$mapfile"; then
-				FAIL=$((FAIL + 1))
-				FAILED_TESTS+=("$base")
-				echo -e "${RED}❌ VALGRIND FAIL: $base${RESET}"
-				continue
-			fi
-		fi
-
-		if [ $USE_MALLOC_STRIKE -eq 1 ]; then
-			echo -e "${CYAN}🧪 MALLOC STRIKE: $base${RESET}"
-
-			if ! run_malloc_strike_test "$mapfile"; then
-				FAIL=$((FAIL + 1))
-				FAILED_TESTS+=("$base")
-				echo -e "${RED}❌ MALLOC FAIL: $base${RESET}"
-				continue
-			fi
-		fi
-
-		PASS=$((PASS + 1))
-		echo -e "${GREEN}✅ PASS: $base${RESET}"
-
-		if [ $VERBOSE -eq 1 ]; then
-			print_verbose "$mapfile" "$expected" "$got"
-		fi
+		echo "$out" | grep -q "NO_FAIL" && break
+		i=$((i + 1))
 	done
 
-	if [ $VERBOSE -eq 0 ] && [ ${#FAILED_TESTS[@]} -gt 0 ]; then
-		echo ""
-		echo -e "${BOLD}══════════ FAILURES ══════════${RESET}"
+	return 0
+}
 
-		for base in "${FAILED_TESTS[@]}"; do
-			mapfile="$TEST_DIR/resource/maps/$base"
-			answerfile="$TEST_DIR/resource/solution/$base"
-
-			echo ""
-			echo -e "${RED}${BOLD}❌ FAIL: $base${RESET}"
-
-			echo -e "${CYAN}  ── INPUT MAP ──────────────────────${RESET}"
-			cat "$mapfile" | sed 's/^/  /'
-
-			echo -e "${CYAN}  ── EXPECTED ───────────────────────${RESET}"
-			cat "$answerfile" | sed 's/^/  /'
-
-			echo -e "${CYAN}  ── GOT ────────────────────────────${RESET}"
-			"$ROOT_DIR/bsq" "$mapfile" | sed 's/^/  /'
-
-			echo -e "${CYAN}  ── DIFF ───────────────────────────${RESET}"
-			diff <(cat "$answerfile") <("$ROOT_DIR/bsq" "$mapfile") | sed 's/^/  /'
-
-			echo -e "${CYAN}  ───────────────────────────────────${RESET}"
-		done
-	fi
-
-	TOTAL=$((PASS + FAIL + MISSING))
+print_verbose()
+{
+	mapfile="$1"
+	expected="$2"
+	got="$3"
 
 	echo ""
-	echo -e "${BOLD}══════════ RESULTS ═══════════${RESET}"
-	echo -e "${GREEN}${BOLD}  ✅ PASSED:  $PASS${RESET}"
-	echo -e "${RED}${BOLD}  ❌ FAILED:  $FAIL${RESET}"
+	echo "── INPUT ──"
+	cat "$mapfile"
+	echo "── EXPECTED ──"
+	echo "$expected"
+	echo "── GOT ──"
+	echo "$got"
+	echo ""
+}
 
-	if [ $MISSING -gt 0 ]; then
-		echo -e "${YELLOW}${BOLD}  ⚠️  MISSING: $MISSING${RESET}"
-	fi
+# ----------------------------
+# big map mode only
+# ----------------------------
 
-	echo -e "${BOLD}  📊 TOTAL:   $TOTAL${RESET}"
-	echo -e "${BOLD}══════════════════════════════${RESET}"
-fi
-
-# 🚨 This block runs unconditionally if --big-map was targeted
 if [ $USE_BIG_MAP -eq 1 ]; then
 	echo ""
 	echo -e "${BOLD}════════ BIG MAP STRESS TESTS (RANDOMIZED + 100K FINALE) ════════${RESET}"
@@ -286,4 +191,233 @@ if [ $USE_BIG_MAP -eq 1 ]; then
 		fi
 		echo ""
 	done
+	exit 0
 fi
+
+# ----------------------------
+# test loop
+# ----------------------------
+
+for mapfile in "$TEST_DIR"/resource/maps/*.map; do
+	base=$(basename "$mapfile")
+	answerfile="$TEST_DIR/resource/solution/$base"
+
+	[ -f "$mapfile" ] || continue
+
+	if [ ! -f "$answerfile" ]; then
+		echo "NO SOLUTION: $base"
+		continue
+	fi
+
+	expected=$(cat "$answerfile")
+
+	# ----------------------------
+	# consistency checks
+	# ----------------------------
+
+	out1=$(run_file "$mapfile")
+	out2=$(run_stdin_file "$mapfile")
+	out3=$(run_pipe_file "$mapfile")
+
+	if [ "$out1" != "$out2" ] || [ "$out1" != "$out3" ]; then
+		echo "❌ STDIN mismatch: $base"
+		FAIL=$((FAIL + 1))
+		continue
+	fi
+
+	got="$out1"
+
+	if [ "$got" != "$expected" ]; then
+		echo "❌ FAIL: $base"
+		FAIL=$((FAIL + 1))
+		FAILED_TESTS+=("$base")
+		continue
+	fi
+
+	# ----------------------------
+	# valgrind mode
+	# ----------------------------
+
+	if [ $USE_VALGRIND -eq 1 ]; then
+		echo "VALGRIND: $base"
+		if ! run_valgrind "$mapfile"; then
+			echo "❌ VALGRIND FAIL: $base"
+			FAIL=$((FAIL + 1))
+			continue
+		fi
+	fi
+
+	# ----------------------------
+	# malloc strike mode
+	# ----------------------------
+
+	if [ $USE_MALLOC_STRIKE -eq 1 ]; then
+		echo "MALLOC STRIKE: $base"
+		if ! run_malloc_strike "$mapfile"; then
+			echo "❌ MALLOC FAIL: $base"
+			FAIL=$((FAIL + 1))
+			continue
+		fi
+	fi
+
+	PASS=$((PASS + 1))
+	echo "✅ PASS: $base"
+
+	if [ $VERBOSE -eq 1 ]; then
+		print_verbose "$mapfile" "$expected" "$got"
+	fi
+done
+
+# ----------------------------
+# multi-file test
+# ----------------------------
+
+echo ""
+echo "════════ MULTI FILE TEST ════════"
+
+multi_cases=(
+	"01_valid_simple.map 02_valid_minimal_empty.map"
+	"01_valid_simple.map 03_valid_minimal_obstacle.map"
+	"02_valid_minimal_empty.map 03_valid_minimal_obstacle.map"
+	"01_valid_simple.map invalid_bad_header.map"
+	"invalid_bad_header.map 01_valid_simple.map"
+	"invalid_bad_header.map invalid_bad_chars.map"
+	"01_valid_simple.map 02_valid_minimal_empty.map invalid_bad_chars.map"
+)
+
+for case in "${multi_cases[@]}"; do
+	files=()
+
+	for name in $case; do
+		files+=("$TEST_DIR/resource/maps/$name")
+	done
+
+	echo ""
+	echo -e "${CYAN}🧪 CASE:${RESET} $case"
+
+	multi_out=$(run_multi_file "${files[@]}")
+
+	expected_out=""
+	for i in "${!files[@]}"; do
+		f="${files[$i]}"
+
+		expected_out+=$(run_file "$f")
+
+		if [ "$i" -lt $((${#files[@]} - 1)) ]; then
+			expected_out+=$'\n\n'
+		fi
+	done
+
+	# normalize trailing newline differences
+	multi_out=$(printf "%s" "$multi_out")
+	expected_out=$(printf "%s" "$expected_out")
+
+	if [ "$multi_out" = "$expected_out" ]; then
+		echo -e "${GREEN}✅ MULTI FILE PASS${RESET}"
+	else
+		echo -e "${RED}❌ MULTI FILE FAIL${RESET}"
+
+		echo ""
+		echo -e "${CYAN}──── EXPECTED ────${RESET}"
+		printf "%s\n" "$expected_out"
+
+		echo ""
+		echo -e "${CYAN}──── GOT ────${RESET}"
+		printf "%s\n" "$multi_out"
+
+		echo ""
+		echo -e "${CYAN}──── DIFF ────${RESET}"
+		diff \
+			<(printf "%s\n" "$expected_out") \
+			<(printf "%s\n" "$multi_out") \
+			| sed 's/^/  /'
+
+		FAIL=$((FAIL + 1))
+	fi
+done
+
+# ----------------------------
+# stdin test
+# ----------------------------
+
+echo ""
+echo "════════ STDIN TEST ════════"
+
+for mapfile in "$TEST_DIR"/resource/maps/*.map; do
+	[ -f "$mapfile" ] || continue
+
+	name=$(basename "$mapfile")
+
+	echo ""
+	echo -e "${CYAN}🧪 STDIN CASE:${RESET} $name"
+
+	arg_out=$(run_file "$mapfile")
+	stdin_out=$(run_stdin_file "$mapfile")
+	pipe_out=$(run_pipe_file "$mapfile")
+	stream_out=$(run_stream_file "$mapfile")
+
+	# normalize trailing newlines
+	arg_out=$(printf "%s" "$arg_out")
+	stdin_out=$(printf "%s" "$stdin_out")
+	pipe_out=$(printf "%s" "$pipe_out")
+	stream_out=$(printf "%s" "$stream_out")
+
+	ok=1
+
+	check_diff()
+	{
+		label="$1"
+		got="$2"
+
+		echo -e "${RED}❌ $label FAIL${RESET}"
+
+		echo ""
+		echo -e "${CYAN}──── EXPECTED ────${RESET}"
+		printf "%s\n" "$arg_out"
+
+		echo ""
+		echo -e "${CYAN}──── GOT ────${RESET}"
+		printf "%s\n" "$got"
+
+		echo ""
+		echo -e "${CYAN}──── DIFF ────${RESET}"
+		diff \
+			<(printf "%s\n" "$arg_out") \
+			<(printf "%s\n" "$got") \
+			| sed 's/^/  /'
+	}
+
+	if [ "$arg_out" != "$stdin_out" ]; then
+		ok=0
+		check_diff "REDIRECT STDIN" "$stdin_out"
+	fi
+
+	if [ "$arg_out" != "$pipe_out" ]; then
+		ok=0
+		check_diff "PIPE STDIN" "$pipe_out"
+	fi
+
+	if [ "$arg_out" != "$stream_out" ]; then
+		ok=0
+		check_diff "STREAM STDIN" "$stream_out"
+	fi
+
+	if [ $ok -eq 1 ]; then
+		echo -e "${GREEN}✅ STDIN PASS${RESET}"
+	else
+		FAIL=$((FAIL + 1))
+	fi
+done
+
+# ----------------------------
+# summary
+# ----------------------------
+
+TOTAL=$((PASS + FAIL + MISSING))
+
+echo ""
+echo "════════ RESULTS ════════"
+echo "PASS: $PASS"
+echo "FAIL: $FAIL"
+echo "MISSING: $MISSING"
+echo "TOTAL: $TOTAL"
